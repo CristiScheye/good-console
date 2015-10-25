@@ -50,6 +50,10 @@ internals.response = {
     responsePayload: {
         foo: 'bar',
         value: 1
+    },
+    requestPayload: {
+        address: '123 main st',
+        age: 20
     }
 };
 internals.request = {
@@ -129,7 +133,7 @@ describe('GoodConsole', function () {
 
                     if (string.indexOf(timeString) === 0) {
                         stand.restore();
-                        expect(string).to.equal(timeString + ', [response], localhost: [1;33mpost[0m /data {"name":"adam"} [32m200[0m (150ms) response payload: {"foo":"bar","value":1}\n');
+                        expect(string).to.equal(timeString + ', [response], localhost: [1;33mpost[0m /data {"name":"adam"} [32m200[0m (150ms) response payload: {"foo":"bar","value":1} request payload: {"address":"123 main st","age":20}\n');
                     }
                     else {
                         stand.original(string, enc, callback);
@@ -162,7 +166,7 @@ describe('GoodConsole', function () {
 
                     if (string.indexOf(timeString) === 0) {
                         stand.restore();
-                        expect(string).to.equal(timeString + ', [response], localhost: [1;33mpost[0m /data  [32m200[0m (150ms) response payload: {"foo":"bar","value":1}\n');
+                        expect(string).to.equal(timeString + ', [response], localhost: [1;33mpost[0m /data  [32m200[0m (150ms) response payload: {"foo":"bar","value":1} request payload: {"address":"123 main st","age":20}\n');
                     }
                     else {
                         stand.original(string, enc, callback);
@@ -194,7 +198,39 @@ describe('GoodConsole', function () {
 
                     if (string.indexOf(timeString) === 0) {
                         stand.restore();
-                        expect(string).to.equal(timeString + ', [response], localhost: [1;33mpost[0m /data {"name":"adam"} [32m200[0m (150ms) \n');
+                        expect(string).to.equal(timeString + ', [response], localhost: [1;33mpost[0m /data {"name":"adam"} [32m200[0m (150ms)  request payload: {"address":"123 main st","age":20}\n');
+                    }
+                    else {
+                        stand.original(string, enc, callback);
+                    }
+                });
+
+                event.timestamp = now;
+
+                var s = internals.readStream(done);
+
+                reporter.init(s, null, function (err) {
+
+                    expect(err).to.not.exist();
+                    s.push(event);
+                    s.push(null);
+                });
+            });
+
+            it('logs to the console for "response" events without a requestPayload', function (done) {
+
+                var reporter = new GoodConsole({ response: '*' });
+                var now = Date.now();
+                var timeString = Moment(now).format(internals.defaults.format);
+                var event = Hoek.clone(internals.response);
+
+                delete event.requestPayload;
+
+                StandIn.replace(process.stdout, 'write', function (stand, string, enc, callback) {
+
+                    if (string.indexOf(timeString) === 0) {
+                        stand.restore();
+                        expect(string).to.equal(timeString + ', [response], localhost: [1;33mpost[0m /data {"name":"adam"} [32m200[0m (150ms) response payload: {"foo":"bar","value":1} \n');
                     }
                     else {
                         stand.original(string, enc, callback);
@@ -224,7 +260,7 @@ describe('GoodConsole', function () {
 
                     if (string.indexOf(timeString) === 0) {
                         stand.restore();
-                        expect(string).to.equal(timeString + ', [response], localhost: [1;34mhead[0m /data {"name":"adam"} [32m200[0m (150ms) response payload: {"foo":"bar","value":1}\n');
+                        expect(string).to.equal(timeString + ', [response], localhost: [1;34mhead[0m /data {"name":"adam"} [32m200[0m (150ms) response payload: {"foo":"bar","value":1} request payload: {"address":"123 main st","age":20}\n');
                     }
                     else {
                         stand.original(string, enc, callback);
@@ -255,7 +291,7 @@ describe('GoodConsole', function () {
 
                     if (string.indexOf(timeString) === 0) {
                         stand.restore();
-                        expect(string).to.equal(timeString + ', [response], localhost: [1;33mpost[0m /data {"name":"adam"}  (150ms) response payload: {"foo":"bar","value":1}\n');
+                        expect(string).to.equal(timeString + ', [response], localhost: [1;33mpost[0m /data {"name":"adam"}  (150ms) response payload: {"foo":"bar","value":1} request payload: {"address":"123 main st","age":20}\n');
                     }
                     else {
                         stand.original(string, enc, callback);
@@ -294,7 +330,7 @@ describe('GoodConsole', function () {
 
                     if (string.indexOf(timeString) === 0) {
 
-                        var expected = Hoek.format('%s, [response], localhost: [1;33mpost[0m /data  [%sm%s[0m (150ms) \n', timeString, colors[counter], counter * 100);
+                        var expected = Hoek.format('%s, [response], localhost: [1;33mpost[0m /data  [%sm%s[0m (150ms)  request payload: {"address":"123 main st","age":20}\n', timeString, colors[counter], counter * 100);
                         expect(string).to.equal(expected);
 
                         counter++;
